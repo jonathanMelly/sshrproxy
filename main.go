@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/Gurpartap/logrus-stack"
-	"github.com/tsurubee/sshr/sshr"
 	"errors"
+	"flag"
+	"github.com/Gurpartap/logrus-stack"
+	"github.com/sirupsen/logrus"
+	"github.com/tsurubee/sshr/sshr"
+	"strings"
 )
 
 func init() {
@@ -13,8 +15,16 @@ func init() {
 	logrus.AddHook(logrus_stack.NewHook(stackLevels, stackLevels))
 }
 
+var separator string
+
 func main() {
-	confFile := "./example.toml"
+
+	flagConfigFile := flag.String("config", "example.toml", "path to config file")
+	flagSeparator := flag.String("separator", "_", "separator for host spec in username")
+
+	flag.Parse()
+	confFile := *flagConfigFile
+	separator = *flagSeparator
 
 	sshServer, err := sshr.NewSSHServer(confFile)
 	if err != nil {
@@ -28,11 +38,12 @@ func main() {
 }
 
 func FindUpstreamByUsername(username string) (string, error) {
-	if username == "tsurubee" {
-		return "host-tsurubee", nil
-	} else if username == "hoge" {
-		return "host-hoge", nil
-	} else {
-		return "", errors.New(username + "'s host is not found!")
+	parts := strings.Split(username, separator)
+	if len(parts) == 2 {
+		host := parts[1]
+		if host != "localhost" {
+			return host, nil
+		}
 	}
+	return "", errors.New("access denied")
 }

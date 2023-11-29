@@ -2,3 +2,5 @@ sshr_bin
 start_server
 vendor/
 Gopkg*
+.idea/
+build/
