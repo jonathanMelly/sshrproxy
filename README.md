@@ -1,6 +1,3 @@
-# Do not use this unless you realy need it ;-)
-I stopped using this after discovering that nginx had an (ssl preread option)[http://nginx.org/en/docs/stream/ngx_stream_ssl_preread_module.html]...
-
 # sshr
 [![Build Status](https://travis-ci.org/tsurubee/sshr.svg?branch=master)](https://travis-ci.org/tsurubee/sshr)  
 
