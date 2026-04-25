@@ -1,9 +1,11 @@
 package sshr
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -25,7 +27,36 @@ func loadConfig(path string) (*config, error) {
 		return nil, err
 	}
 
+	if err := validateAndLogConfig(&c); err != nil {
+		return nil, err
+	}
+
 	return &c, nil
+}
+
+func validateAndLogConfig(c *config) error {
+	logrus.Infof("Config: listen_addr=%s", c.ListenAddr)
+	logrus.Infof("Config: destination_port=%s", c.DestinationPort)
+	logrus.Infof("Config: server_hostkey_path=%v", c.HostKeyPath)
+	logrus.Infof("Config: use_master_key=%v", c.UseMasterKey)
+
+	for _, kp := range c.HostKeyPath {
+		if _, err := os.Stat(kp); err != nil {
+			return fmt.Errorf("server_hostkey_path %q not found: %v", kp, err)
+		}
+	}
+
+	if c.UseMasterKey {
+		logrus.Infof("Config: master_key_path=%q", c.MasterKeyPath)
+		if c.MasterKeyPath == "" {
+			return fmt.Errorf("use_master_key is true but master_key_path is empty — check toml key spelling (must be master_key_path)")
+		}
+		if _, err := os.Stat(c.MasterKeyPath); err != nil {
+			return fmt.Errorf("master_key_path %q not found: %v", c.MasterKeyPath, err)
+		}
+	}
+
+	return nil
 }
 
 func newServerConfig(c *config) (*ssh.ServerConfig, error) {
