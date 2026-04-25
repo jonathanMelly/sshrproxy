@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  GREETING: Hello, world!
+
+tasks:
+
+  default:
+    desc: 
+    cmds:
+      - task --list
+    silent: true
+    
+  build-prod:
+    desc: build for prod
+    vars:
+      GOOS: linux
+      GOARCH: amd64
+    env:
+      GOOS: "{{.GOOS}}"
+      GOARCH: "{{.GOARCH}}"
+    cmds:
+      - echo "Building for GOOS={{.GOOS}} GOARCH={{.GOARCH}}, you may override with task build GOOS=windows GOARCH=amd64"
+      - go build -o build/sshr-{{.GOOS}}-{{.GOARCH}}
