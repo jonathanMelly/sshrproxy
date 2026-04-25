@@ -56,6 +56,8 @@ func validateAndLogConfig(c *config) error {
 		}
 	}
 
+	logrus.Infof("Be sure to put end user public key in this machine /home/user_host/.ssh/authorized_keys AND this machine public key /home/.../.ssh/id_ed..pub into target server")
+
 	return nil
 }
 
