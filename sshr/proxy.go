@@ -65,9 +65,25 @@ func newSSHProxyConn(conn net.Conn, proxyConf *ssh.ProxyConfig) (proxyConn *ssh.
 
 	p.Upstream = u
 
+	// Wrap the hook per-connection to detect whether pubkey auth was ever attempted.
+	pubkeyAttempted := false
+	connConf := *proxyConf
+	origHook := proxyConf.FetchAuthorizedKeysHook
+	connConf.FetchAuthorizedKeysHook = func(u string, h string) ([]byte, error) {
+		pubkeyAttempted = true
+		if origHook != nil {
+			return origHook(u, h)
+		}
+		return nil, nil
+	}
+
 	logrus.Infof("[proxy] user=%s starting auth (initial method=%s)", username, authRequestMsg.Method)
-	if err = p.AuthenticateProxyConn(authRequestMsg, proxyConf); err != nil {
-		logrus.Errorf("[proxy] user=%s AuthenticateProxyConn failed: %v", username, err)
+	if err = p.AuthenticateProxyConn(authRequestMsg, &connConf); err != nil {
+		if !pubkeyAttempted {
+			logrus.Warnf("[proxy] user=%s auth failed: %v — client never offered a pubkey (no key in agent/identity, or password-only client)", username, err)
+		} else {
+			logrus.Errorf("[proxy] user=%s AuthenticateProxyConn failed: %v", username, err)
+		}
 		return p, err
 	}
 
